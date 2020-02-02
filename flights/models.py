@@ -1,3 +1,6 @@
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -28,3 +31,29 @@ class Profile(models.Model):
 
 	def __str__(self):
 		return str(self.user)
+
+
+@receiver(post_save, sender=User)
+def creat_profile(instance, *args, **kwargs):
+	Profile.objects.create(user=instance)
+
+
+@receiver(post_save, sender=Booking)
+def add_miles(instance, *args, **kwargs):
+	flight_miles=instance.flight.miles
+	profile_miles=instance.user.profile.miles 
+	new_miles=flight_miles+profile_miles
+	instance.user.profile.miles=new_miles
+	instance.user.profile.save()    # why not instance.user.profile.miles
+
+
+@receiver(post_delete, sender=Booking)
+def delete_miles(instance, *args, **kwargs):
+	flight_miles=instance.flight.miles
+	profile_miles=instance.user.profile.miles 
+	new_miles=profile_miles-flight_miles
+	instance.user.profile.miles=new_miles
+	instance.user.profile.save()    # why not instance.user.profile.miles
+
+
+	
